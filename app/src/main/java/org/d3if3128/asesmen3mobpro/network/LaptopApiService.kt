@@ -29,4 +29,7 @@ object LaptopApi{
     val service: LaptopApiService by lazy {
         retrofit.create(LaptopApiService::class.java)
     }
+    fun getLaptopUrl(imageId: String): String{
+        return "$BASE_URL$imageId.jpg"
+    }
 }
