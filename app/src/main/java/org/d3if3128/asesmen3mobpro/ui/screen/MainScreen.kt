@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +40,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import org.d3if3128.asesmen3mobpro.R
 import org.d3if3128.asesmen3mobpro.model.Laptop
+import org.d3if3128.asesmen3mobpro.network.ApiStatus
 import org.d3if3128.asesmen3mobpro.network.LaptopApi
 import org.d3if3128.asesmen3mobpro.ui.theme.Asesmen3MobproTheme
 
@@ -64,15 +67,29 @@ fun MainScreen(){
 fun ScreenContent(modifier: Modifier){
     val viewModel: MainViewModel = viewModel()
     val data by viewModel.data
+    val status by viewModel.status.collectAsState()
 
-    LazyVerticalGrid(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(4.dp),
-        columns = GridCells.Fixed(2),
-    ){
-        items(data){ ListItem(laptop = it)}
+    when(status){
+        ApiStatus.LOADING -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ){
+                CircularProgressIndicator()
+            }
+        }
+        ApiStatus.SUCCESS -> {
+            LazyVerticalGrid(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(4.dp),
+                columns = GridCells.Fixed(2),
+            ){
+                items(data){ ListItem(laptop = it)}
+            }
+        }
     }
+
 }
 
 @Composable
@@ -91,7 +108,7 @@ fun ListItem(laptop: Laptop){
             contentDescription = stringResource(R.string.gambar, laptop.nama),
             contentScale = ContentScale.Crop,
             placeholder = painterResource(id = R.drawable.loading_img),
-            error = painterResource(id = R.drawable.baseline_broken_image_24),
+//            error = painterResource(id = R.drawable.baseline_broken_image_24),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(4.dp)

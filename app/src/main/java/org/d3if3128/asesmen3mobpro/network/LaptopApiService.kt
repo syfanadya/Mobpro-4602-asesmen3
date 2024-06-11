@@ -33,3 +33,5 @@ object LaptopApi{
         return "$BASE_URL$imageId.jpg"
     }
 }
+
+enum class ApiStatus {LOADING, SUCCESS}
