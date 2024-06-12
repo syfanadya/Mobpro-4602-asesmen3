@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -149,7 +150,7 @@ fun MainScreen(){
             }
         }
     ) {padding ->
-        ScreenContent(viewModel, Modifier.padding(padding))
+        ScreenContent(viewModel, user.email, Modifier.padding(padding))
 
         if (showDialog){
             ProfilDialog(
@@ -176,9 +177,13 @@ fun MainScreen(){
     }
 }
 @Composable
-fun ScreenContent(viewModel: MainViewModel, modifier: Modifier){
+fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier){
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
+
+    LaunchedEffect(userId){
+        viewModel.retrieveData(userId)
+    }
 
     when(status){
         ApiStatus.LOADING -> {
@@ -208,7 +213,7 @@ fun ScreenContent(viewModel: MainViewModel, modifier: Modifier){
             ){
                 Text(text = stringResource(id = R.string.error))
                 Button(
-                    onClick = { viewModel.retrieveData() },
+                    onClick = { viewModel.retrieveData(userId) },
                     modifier = Modifier.padding(top = 16.dp),
                     contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
                 ) {

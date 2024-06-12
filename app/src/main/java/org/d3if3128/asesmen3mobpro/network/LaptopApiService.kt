@@ -28,7 +28,9 @@ private val retrofit = Retrofit.Builder()
 
 interface LaptopApiService {
     @GET("api_syfa.php")
-    suspend fun getLaptop(): List<Laptop>
+    suspend fun getLaptop(
+        @Header("Authorization") userId: String
+    ): List<Laptop>
 
     @Multipart
     @POST("api_syfa.php")
