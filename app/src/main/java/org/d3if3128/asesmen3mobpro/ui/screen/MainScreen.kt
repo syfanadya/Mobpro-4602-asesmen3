@@ -91,10 +91,12 @@ fun MainScreen(){
     val user by dataStore.userFlow.collectAsState(User())
 
     var showDialog by remember { mutableStateOf(false) }
+    var showLaptopDialog by remember { mutableStateOf(false) }
 
     var bitmap: Bitmap? by remember { mutableStateOf(null) }
     val launcher = rememberLauncherForActivityResult(CropImageContract()){
         bitmap = getCroppedImage(context.contentResolver,it)
+        if (bitmap != null) showLaptopDialog = true
     }
 
     Scaffold(
@@ -151,6 +153,15 @@ fun MainScreen(){
                 onDismissRequest = { showDialog = false }) {
                 CoroutineScope(Dispatchers.IO).launch { signOut(context,dataStore) }
                 showDialog = false
+            }
+        }
+
+        if(showLaptopDialog){
+            LaptopDialog(
+                bitmap = bitmap,
+                onDismissRequest = { showLaptopDialog = false }){ nama, processor ->
+                Log.d("TAMBAH", "$nama $processor ditambahkan.")
+                showLaptopDialog = false
             }
         }
     }

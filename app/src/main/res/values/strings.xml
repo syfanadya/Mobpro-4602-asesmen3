@@ -7,4 +7,8 @@
     <string name="tutup">Tutup</string>
     <string name="logout">Logout</string>
     <string name="tambah_laptop">Tambah Laptop</string>
+    <string name="nama">Nama</string>
+    <string name="processor">Processor</string>
+    <string name="batal">Batal</string>
+    <string name="simpan">Simpan</string>
 </resources>
