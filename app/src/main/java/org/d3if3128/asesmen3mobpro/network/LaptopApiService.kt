@@ -8,11 +8,13 @@ import org.d3if3128.asesmen3mobpro.model.Laptop
 import org.d3if3128.asesmen3mobpro.model.OpStatus
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Query
 
 private const val BASE_URL = "https://unspoken.my.id/"
 
@@ -39,6 +41,12 @@ interface LaptopApiService {
         @Part("nama") nama: RequestBody,
         @Part("processor") processor: RequestBody,
         @Part image: MultipartBody.Part
+    ): OpStatus
+
+    @DELETE("api_syfa.php")
+    suspend fun deleteLaptop(
+        @Header("Authorization") userId: String,
+        @Query("id") id:String
     ): OpStatus
 }
 

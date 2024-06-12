@@ -17,14 +17,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -97,6 +101,9 @@ fun MainScreen(){
 
     var showDialog by remember { mutableStateOf(false) }
     var showLaptopDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    var idLaptopToDelete by remember { mutableStateOf<String?>(null) }
 
     var bitmap: Bitmap? by remember { mutableStateOf(null) }
     val launcher = rememberLauncherForActivityResult(CropImageContract()){
@@ -150,7 +157,15 @@ fun MainScreen(){
             }
         }
     ) {padding ->
-        ScreenContent(viewModel, user.email, Modifier.padding(padding))
+        ScreenContent(
+            viewModel,
+            user.email,
+            Modifier.padding(padding),
+            onDeleteRequest = { id ->
+                idLaptopToDelete = id
+                showDeleteDialog = true
+            }
+        )
 
         if (showDialog){
             ProfilDialog(
@@ -170,6 +185,19 @@ fun MainScreen(){
             }
         }
 
+        if(showDeleteDialog && idLaptopToDelete != null){
+            DeleteDialog(
+                userId = user.email,
+                id = idLaptopToDelete!!,
+                onDismissRequest = { showDeleteDialog = false },
+                onConfirmation = {userId, id ->
+                    viewModel.deleteData(userId, id)
+                    showDeleteDialog = false
+                }
+            )
+
+        }
+
         if(errorMessage != null){
             Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
             viewModel.clearMessage()
@@ -177,7 +205,13 @@ fun MainScreen(){
     }
 }
 @Composable
-fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier){
+fun ScreenContent(
+    viewModel: MainViewModel,
+    userId: String,
+    modifier: Modifier,
+    onDeleteRequest: (String) -> Unit
+){
+
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
 
@@ -202,7 +236,7 @@ fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier){
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ){
-                items(data){ ListItem(laptop = it)}
+                items(data){ ListItem(laptop = it, onDeleteRequest)}
             }
         }
         ApiStatus.FAILED -> {
@@ -226,7 +260,7 @@ fun ScreenContent(viewModel: MainViewModel, userId: String, modifier: Modifier){
 }
 
 @Composable
-fun ListItem(laptop: Laptop){
+fun ListItem(laptop: Laptop, onDeleteRequest: (String)-> Unit){
     Box(
         modifier = Modifier
             .padding(4.dp)
@@ -253,19 +287,34 @@ fun ListItem(laptop: Laptop){
                 .background(Color(red = 0f, green = 0f, blue = 0f, alpha = 0.5f))
                 .padding(4.dp)
         ) {
-            Text(
-                text = laptop.nama,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Text(
-                text = laptop.processor,
-                fontStyle = FontStyle.Italic,
-                fontSize = 14.sp,
-                color = Color.White
-            )
+            Row{
+                Column(
+                    Modifier.width(100.dp)
+                ) {
+
+                    Text(
+                        text = laptop.nama,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                    Text(
+                        text = laptop.processor,
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                }
+                Spacer(modifier = Modifier.width(20.dp))
+
+                    IconButton(onClick = {onDeleteRequest(laptop.id)} ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.hapus),
+                            tint = Color.White
+                        )
+                    }
+
+            }
         }
     }
 }
