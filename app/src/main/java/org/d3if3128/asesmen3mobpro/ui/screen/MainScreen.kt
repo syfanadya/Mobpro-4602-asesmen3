@@ -29,6 +29,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,14 +62,20 @@ import kotlinx.coroutines.launch
 import org.d3if3128.asesmen3mobpro.BuildConfig
 import org.d3if3128.asesmen3mobpro.R
 import org.d3if3128.asesmen3mobpro.model.Laptop
+import org.d3if3128.asesmen3mobpro.model.User
 import org.d3if3128.asesmen3mobpro.network.ApiStatus
 import org.d3if3128.asesmen3mobpro.network.LaptopApi
+import org.d3if3128.asesmen3mobpro.network.UserDataStore
 import org.d3if3128.asesmen3mobpro.ui.theme.Asesmen3MobproTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(){
     val context = LocalContext.current
+    val dataStore = UserDataStore(context)
+    val user by dataStore.userFlow.collectAsState(User())
+
+    var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -80,7 +89,12 @@ fun MainScreen(){
                 ),
                 actions = {
                     IconButton(onClick = {
-                        CoroutineScope(Dispatchers.IO).launch { signIn(context) }
+                        if (user.email.isEmpty()){
+                            CoroutineScope(Dispatchers.IO).launch { signIn(context, dataStore) }
+                        }
+                        else{
+                            showDialog = true
+                        }
                     }) {
                         Icon(
                             painter = painterResource(R.drawable.baseline_account_circle_24),
@@ -93,6 +107,14 @@ fun MainScreen(){
         }
     ) {padding ->
         ScreenContent(Modifier.padding(padding))
+
+        if (showDialog){
+            ProfilDialog(
+                user = user,
+                onDismissRequest = { showDialog = false }) {
+                showDialog = false
+            }
+        }
     }
 }
 @Composable
@@ -185,7 +207,7 @@ fun ListItem(laptop: Laptop){
     }
 }
 
-private suspend fun signIn(context: Context){
+private suspend fun signIn(context: Context, dataStore: UserDataStore){
     val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(false)
         .setServerClientId(BuildConfig.API_KEY)
@@ -198,19 +220,25 @@ private suspend fun signIn(context: Context){
     try {
         val credentialManager = CredentialManager.create(context)
         val result = credentialManager.getCredential(context, request)
-        handleSignIn(result)
+        handleSignIn(result, dataStore)
     } catch (e: GetCredentialException){
         Log.e("SIGN-IN", "Error: ${e.errorMessage}")
     }
 }
 
-private fun handleSignIn(result: GetCredentialResponse){
+private suspend fun handleSignIn(
+    result: GetCredentialResponse,
+    dataStore: UserDataStore
+){
     val credential = result.credential
     if (credential is CustomCredential &&
         credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL){
         try {
             val googleId = GoogleIdTokenCredential.createFrom(credential.data)
-            Log.d("SIGN-IN", "User email: ${googleId.id}")
+            val nama = googleId.displayName ?: ""
+            val email = googleId.id
+            val photoUrl = googleId.profilePictureUri.toString()
+            dataStore.saveData(User(nama, email, photoUrl))
         } catch (e: GoogleIdTokenParsingException){
             Log.e("SIGN-IN", "Error: ${e.message}")
         }
